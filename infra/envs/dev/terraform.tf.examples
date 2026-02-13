@@ -1,0 +1,6 @@
+project_name = "three-tier-app"
+environment  = "dev"
+vpc_cidr     = "30.0.0.0/16"
+az_count     = 2
+alarm_email  = "com"
+
