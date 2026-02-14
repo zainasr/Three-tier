@@ -69,6 +69,26 @@ variable "container_port" {
   default     = 80
 }
 
+variable "additional_policy_arns" {
+  description = "Additional IAM policy ARNs to attach to the app role (e.g. Secrets Manager read)."
+  type        = list(string)
+  default     = []
+}
+
+# When true, user_data runs the ECR app container with container_env; when false, runs nginx placeholder.
+variable "use_app_container" {
+  description = "If true, launch template runs the ECR app container; if false, runs nginx placeholder."
+  type        = bool
+  default     = false
+}
+
+# Env vars passed to the app container (e.g. DB_SECRET_ARN, AWS_REGION). Only used when use_app_container is true.
+variable "container_env" {
+  description = "Environment variables for the app container (key = value). Injected as docker run -e."
+  type        = map(string)
+  default     = {}
+}
+
 variable "tags" {
   description = "Common tags to apply to all resources."
   type        = map(string)

@@ -1,0 +1,43 @@
+# App: build Docker image and push to ECR on push to main when app/ changes.
+# Uses OIDC (AWS_ROLE_ARN) or fallback to AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY.
+
+name: App build and push
+
+on:
+  push:
+    branches: [main]
+    paths: ['app/**']
+
+env:
+  AWS_REGION: ap-south-1
+  ECR_REPO: three-tier-app
+
+jobs:
+  build-push:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push
+        env:
+          ECR_REGISTRY: ${{ steps.ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG -t $ECR_REGISTRY/$ECR_REPO:latest ./app
+          docker push $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPO:latest

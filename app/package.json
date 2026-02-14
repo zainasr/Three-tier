@@ -1,0 +1,17 @@
+{
+  "name": "three-tier-app",
+  "version": "1.0.0",
+  "description": "Minimal app for 3-tier stack: /health, optional DB check via Secrets Manager",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "health": "node -e \"require('http').get('http://localhost:'+(process.env.PORT||80)+'/health',r=>process.exit(r.statusCode===200?0:1))\""
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@aws-sdk/client-secrets-manager": "^3.700.0",
+    "express": "^4.21.0"
+  }
+}

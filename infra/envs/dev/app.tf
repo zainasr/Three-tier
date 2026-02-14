@@ -26,6 +26,15 @@ module "app_blue" {
   image_tag          = "latest"
   container_port     = 80
 
+  use_app_container = true
+  container_env = {
+    DB_SECRET_ARN = aws_secretsmanager_secret.db.arn
+    AWS_REGION    = "ap-south-1"
+    ENVIRONMENT   = var.environment
+  }
+
+  additional_policy_arns = [aws_iam_policy.app_db_secret.arn]
+
   tags = {
     Project     = var.project_name
     Environment = var.environment
@@ -33,14 +42,11 @@ module "app_blue" {
     Component   = "app-blue"
   }
 
-  // Ensure supporting infrastructure exists before we try to launch instances:
-  // - VPC and subnets
-  // - ALB and its target groups
-  // - ECR repository for the image
   depends_on = [
     module.vpc,
     module.alb,
     aws_ecr_repository.app,
+    aws_iam_policy.app_db_secret,
   ]
 }
 
@@ -64,6 +70,15 @@ module "app_green" {
   image_tag          = "latest"
   container_port     = 80
 
+  use_app_container = true
+  container_env = {
+    DB_SECRET_ARN = aws_secretsmanager_secret.db.arn
+    AWS_REGION    = "ap-south-1"
+    ENVIRONMENT   = var.environment
+  }
+
+  additional_policy_arns = [aws_iam_policy.app_db_secret.arn]
+
   tags = {
     Project     = var.project_name
     Environment = var.environment
@@ -75,6 +90,7 @@ module "app_green" {
     module.vpc,
     module.alb,
     aws_ecr_repository.app,
+    aws_iam_policy.app_db_secret,
   ]
 }
 

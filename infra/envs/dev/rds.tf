@@ -53,3 +53,20 @@ resource "aws_secretsmanager_secret_version" "db" {
     password = random_password.db.result
   })
 }
+
+# IAM policy: allow app instances to read the DB secret (for /db and DB connection).
+resource "aws_iam_policy" "app_db_secret" {
+  name        = "${var.project_name}-${var.environment}-app-db-secret"
+  description = "Allow app tier to read DB connection secret"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = "secretsmanager:GetSecretValue"
+        Resource = aws_secretsmanager_secret.db.arn
+      }
+    ]
+  })
+}

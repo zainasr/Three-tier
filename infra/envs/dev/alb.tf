@@ -13,8 +13,8 @@ module "alb" {
 
   certificate_arn = module.route53_acm.certificate_arn
 
-  enable_waf     = false
-  waf_web_acl_arn = ""
+  enable_waf      = true
+  waf_web_acl_arn = module.waf.web_acl_arn
 
   tags = {
     Project     = var.project_name
@@ -24,6 +24,6 @@ module "alb" {
   }
 
   
-  depends_on = [module.route53_acm]
+  depends_on = [module.route53_acm, module.waf]
 }
 

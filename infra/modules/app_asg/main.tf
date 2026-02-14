@@ -122,47 +122,56 @@ resource "aws_iam_role_policy_attachment" "app" {
   policy_arn = aws_iam_policy.app.arn
 }
 
+resource "aws_iam_role_policy_attachment" "additional" {
+  for_each = toset(var.additional_policy_arns)
+
+  role       = aws_iam_role.app.name
+  policy_arn = each.value
+}
+
 resource "aws_iam_instance_profile" "app" {
   name = "${var.name}-app-instance-profile"
   role = aws_iam_role.app.name
 }
 
 locals {
-  user_data = <<-EOT
+  # ECR registry host (no path) for docker login
+  ecr_registry = regex("^[^/]+", var.ecr_repository_url)
+  # Build docker run -e args from container_env; value is shell-escaped (wrap in single quotes for safety).
+  container_env_args = join(" ", [for k, v in var.container_env : "-e '${k}=${replace(v, "'", "'\"'\"'")}'"])
+
+  user_data_nginx = <<-EOT
               #!/bin/bash
               set -euo pipefail
-
-              # Install nginx and SSM agent (Amazon Linux 2023)
               dnf update -y
               dnf install -y nginx amazon-ssm-agent
-              
-              # Enable and start services
-              systemctl enable nginx
-              systemctl enable amazon-ssm-agent
-              systemctl start nginx
-              systemctl start amazon-ssm-agent
-
-              # Create a simple health check endpoint
-              cat > /usr/share/nginx/html/health <<'HEALTH'
-              {"status":"ok","service":"app"}
-              HEALTH
-
-              # Configure nginx to serve health endpoint
+              systemctl enable nginx amazon-ssm-agent
+              systemctl start nginx amazon-ssm-agent
               cat > /etc/nginx/conf.d/health.conf <<'NGINX'
-              location /health {
-                  default_type application/json;
-                  return 200 '{"status":"ok","service":"app"}';
-                  add_header Content-Type application/json;
-              }
+              location /health { default_type application/json; return 200 '{"status":"ok"}'; }
               NGINX
-
-              # Test nginx config and reload
               nginx -t && systemctl reload nginx
-
-              # Log completion
-              echo "User data script completed at $(date)" >> /var/log/user-data.log
-
+              echo "User data (nginx) completed at $(date)" >> /var/log/user-data.log
               EOT
+
+  user_data_app = <<-EOT
+              #!/bin/bash
+              set -euo pipefail
+              dnf update -y
+              dnf install -y docker amazon-ssm-agent
+              systemctl enable docker amazon-ssm-agent
+              systemctl start docker amazon-ssm-agent
+              aws ecr get-login-password --region ${data.aws_region.current.name} \
+                | docker login --username AWS --password-stdin ${local.ecr_registry}
+              docker pull ${var.ecr_repository_url}:${var.image_tag}
+              docker run -d --name app --restart unless-stopped \
+                -p ${var.container_port}:${var.container_port} \
+                ${local.container_env_args} \
+                ${var.ecr_repository_url}:${var.image_tag}
+              echo "User data (app container) completed at $(date)" >> /var/log/user-data.log
+              EOT
+
+  user_data = var.use_app_container ? local.user_data_app : local.user_data_nginx
 }
 
 resource "aws_launch_template" "app" {
