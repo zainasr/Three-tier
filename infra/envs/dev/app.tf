@@ -33,7 +33,7 @@ module "app_blue" {
     ENVIRONMENT   = var.environment
   }
 
-  additional_policy_arns = [aws_iam_policy.app_db_secret.arn]
+  additional_policy_arns = { "db-secret" = aws_iam_policy.app_db_secret.arn }
 
   tags = {
     Project     = var.project_name
@@ -77,7 +77,7 @@ module "app_green" {
     ENVIRONMENT   = var.environment
   }
 
-  additional_policy_arns = [aws_iam_policy.app_db_secret.arn]
+  additional_policy_arns = { "db-secret" = aws_iam_policy.app_db_secret.arn }
 
   tags = {
     Project     = var.project_name

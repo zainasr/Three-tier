@@ -5,9 +5,10 @@ module "monitoring" {
 
   name = "${var.project_name}-${var.environment}"
 
-  alb_arn_suffix             = module.alb.alb_arn_suffix
+  alb_arn_suffix              = module.alb.alb_arn_suffix
   target_group_arn_suffix_blue = module.alb.target_group_blue_arn_suffix
-  rds_instance_id            = module.rds.id
+  enable_rds_cpu_alarm        = true
+  rds_instance_id             = module.rds.id
 
   alarm_email = "${var.alarm_email}"
 
