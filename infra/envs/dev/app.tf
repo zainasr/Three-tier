@@ -35,6 +35,10 @@ module "app_blue" {
 
   additional_policy_arns = { "db-secret" = aws_iam_policy.app_db_secret.arn }
 
+  deployment_color          = "blue"
+  install_codedeploy_agent  = true
+  codedeploy_s3_bucket_arn  = module.codedeploy.revisions_bucket_arn
+
   tags = {
     Project     = var.project_name
     Environment = var.environment
@@ -45,6 +49,7 @@ module "app_blue" {
   depends_on = [
     module.vpc,
     module.alb,
+    module.codedeploy,
     aws_ecr_repository.app,
     aws_iam_policy.app_db_secret,
   ]
@@ -79,6 +84,10 @@ module "app_green" {
 
   additional_policy_arns = { "db-secret" = aws_iam_policy.app_db_secret.arn }
 
+  deployment_color          = "green"
+  install_codedeploy_agent  = true
+  codedeploy_s3_bucket_arn  = module.codedeploy.revisions_bucket_arn
+
   tags = {
     Project     = var.project_name
     Environment = var.environment
@@ -89,6 +98,7 @@ module "app_green" {
   depends_on = [
     module.vpc,
     module.alb,
+    module.codedeploy,
     aws_ecr_repository.app,
     aws_iam_policy.app_db_secret,
   ]

@@ -40,3 +40,18 @@ output "alarm_sns_topic_arn" {
   value       = module.monitoring.alarm_sns_topic_arn
 }
 
+output "codedeploy_application_name" {
+  description = "CodeDeploy application name (for create-deployment)."
+  value       = module.codedeploy.application_name
+}
+
+output "codedeploy_deployment_group_name" {
+  description = "CodeDeploy blue/green deployment group name."
+  value       = module.codedeploy.deployment_group_name
+}
+
+output "codedeploy_revisions_bucket" {
+  description = "S3 bucket ID for CodeDeploy revision bundles."
+  value       = module.codedeploy.revisions_bucket_id
+}
+
